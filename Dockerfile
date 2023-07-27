@@ -33,7 +33,7 @@ RUN apt update && apt install -y \
 RUN apt update && apt install -y python3-venv && python3 -m venv .rolling && . .rolling/bin/activate
 # For the virtual environment to be used in docker, add it to PATH like so:
 # https://stackoverflow.com/questions/48561981/activate-python-virtualenv-in-dockerfile
-ENV PATH="/.humble/bin:$PATH"
+ENV PATH="/.rolling/bin:$PATH"
 RUN python3 -m pip install -U \
       argcomplete \
       flake8 \
