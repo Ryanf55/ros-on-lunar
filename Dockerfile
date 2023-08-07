@@ -61,6 +61,19 @@ RUN apt update && apt install --no-install-recommends -y \
 RUN apt update && apt install --no-install-recommends -y \
     libcunit1-dev
 
+RUN apt update && apt install --no-install-recommends -y \
+    vcstool \
+    colcon \ 
+    python3-rosdep2
+RUN mkdir -p /root/ros2_humble/src
+WORKDIR /root/ros2_humble
+RUN vcs import --input https://raw.githubusercontent.com/ros2/ros2/humble/ros2.repos src
+RUN rosdep update && \
+    rosdep install --rosdistro humble --from-paths src --ignore-src -y --skip-keys "fastcdr rti-connext-dds-6.0.1 urdfdom_headers ignition-math6 ignition-cmake2 catkin-pkg"
+    # RF - added ignore for the ignition-math6 and ignition-cmake2 and catkin-pkg
+
+
+
 
 
 
