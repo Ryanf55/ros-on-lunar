@@ -30,7 +30,7 @@ RUN --mount=type=cache,target=/var/cache/apt \
     python3-pip \
     # E: Unable to locate package python-rosdep \ 
     # python-rosdep \
-    # E: Unable to locate package python3-vcstool
+    # E: Unable to locate package python3-vcstool \
     # python3-vcstool \
     wget  
 
@@ -80,7 +80,8 @@ RUN --mount=type=cache,target=/var/cache/apt \
 RUN --mount=type=cache,target=/var/cache/apt \
     apt update && apt install --no-install-recommends -y \
       vcstool \
-      colcon \ 
+      # Install colcon  through pip instaed\
+      # colcon \ 
       python3-rosdep2
 RUN mkdir -p /root/ros2_humble/src
 WORKDIR /root/ros2_humble
@@ -93,17 +94,16 @@ RUN --mount=type=cache,target=/root/.cache \
     rosdep install --rosdistro humble --from-paths src --ignore-src -y --skip-keys "fastcdr rti-connext-dds-6.0.1 urdfdom_headers ignition-math6 ignition-cmake2 catkin-pkg python3-catkin-pkg-modules python3-vcstool python3-rosdistro-modules"
     # RF - added ignore for the ignition-math6 and ignition-cmake2 and catkin-pkg
 
+# https://colcon.readthedocs.io/en/released/user/installation.html
+# Install with pip because the apt package doesn't provide --packages-up-to
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python3 -m pip install -U \
+      colcon-common-extensions
+
 # This will cache the build
 RUN --mount=type=cache,target=/root/build \
     which colcon \
     && colcon build
 
-
-
-
-
-
-
-
-
+    # Fails with lark not found: https://github.com/ros2/rosidl/issues/491
 
