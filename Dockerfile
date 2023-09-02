@@ -1,7 +1,12 @@
+# syntax = docker/dockerfile:1.2
 FROM ubuntu:lunar
+RUN rm -f /etc/apt/apt.conf.d/docker-clean
+# Cache for pip and apt
+# https://pythonspeed.com/articles/docker-cache-pip-downloads/
 
 # https://docs.ros.org/en/eloquent/Installation/Linux-Development-Setup.html#set-locale
-RUN apt update && apt -y install locales \ 
+RUN --mount=type=cache,target=/var/cache/apt \
+  apt update && apt -y install --no-install-recommends locales \ 
   && locale-gen en_US en_US.UTF-8 \
   && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 \ 
   && export LANG=en_US.UTF-8
@@ -14,27 +19,36 @@ RUN apt update && apt -y install locales \
 #  && sh -c 'echo "deb [arch=$(dpkg --print-architecture)] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" > /etc/apt/sources.list.d/ros2-latest.list'
 
 # https://docs.ros.org/en/eloquent/Installation/Linux-Development-Setup.html#install-development-tools-and-ros-tools
-RUN apt update && apt install -y \
-  build-essential \
-  cmake \
-  git \
-  # E: Unable to locate package python3-colcon-common-extensions \
-  # python3-colcon-common-extensions \
-  python3-pip \
-  # E: Unable to locate package python-rosdep \ 
-  # python-rosdep \
-  # E: Unable to locate package python3-vcstool
-  # python3-vcstool \
-  wget  
+RUN --mount=type=cache,target=/var/cache/apt \
+  apt update \
+  && apt install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    git \
+    # E: Unable to locate package python3-colcon-common-extensions \
+    # python3-colcon-common-extensions \
+    python3-pip \
+    # E: Unable to locate package python-rosdep \ 
+    # python-rosdep \
+    # E: Unable to locate package python3-vcstool
+    # python3-vcstool \
+    wget  
 
 
 # install some pip packages needed for testing
 # Before this, create a virtual environment
-RUN apt update && apt install -y python3-venv && python3 -m venv .rolling && . .rolling/bin/activate
+RUN --mount=type=cache,target=/var/cache/apt \
+    --mount=type=cache,target=/root/.cache/pip \
+  apt update && \
+  apt install --no-install-recommends -y python3-venv && \
+  python3 -m venv .rolling && \
+  . .rolling/bin/activate
+
 # For the virtual environment to be used in docker, add it to PATH like so:
 # https://stackoverflow.com/questions/48561981/activate-python-virtualenv-in-dockerfile
 ENV PATH="/.rolling/bin:$PATH"
-RUN python3 -m pip install -U \
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python3 -m pip install -U \
       argcomplete \
       flake8 \
       flake8-blind-except \
@@ -53,25 +67,36 @@ RUN python3 -m pip install -U \
       setuptools
 # install Fast-RTPS dependencies
 # RF - added in apt-update
-RUN apt update && apt install --no-install-recommends -y \
-    libasio-dev \
-    libtinyxml2-dev
+RUN --mount=type=cache,target=/var/cache/apt \
+    apt update && apt install --no-install-recommends -y \
+      libasio-dev \
+      libtinyxml2-dev
 # install Cyclone DDS dependencies
 # RF - added in apt-update
-RUN apt update && apt install --no-install-recommends -y \
+RUN --mount=type=cache,target=/var/cache/apt \
+    apt update && apt install --no-install-recommends -y \
     libcunit1-dev
 
-RUN apt update && apt install --no-install-recommends -y \
-    vcstool \
-    colcon \ 
-    python3-rosdep2
+RUN --mount=type=cache,target=/var/cache/apt \
+    apt update && apt install --no-install-recommends -y \
+      vcstool \
+      colcon \ 
+      python3-rosdep2
 RUN mkdir -p /root/ros2_humble/src
 WORKDIR /root/ros2_humble
 RUN vcs import --input https://raw.githubusercontent.com/ros2/ros2/humble/ros2.repos src
-RUN rosdep update && \
-    rosdep install --rosdistro humble --from-paths src --ignore-src -y --skip-keys "fastcdr rti-connext-dds-6.0.1 urdfdom_headers ignition-math6 ignition-cmake2 catkin-pkg"
+
+
+RUN --mount=type=cache,target=/root/.cache \
+    --mount=type=cache,target=/root/.cache/pip \
+    rosdep update && \
+    rosdep install --rosdistro humble --from-paths src --ignore-src -y --skip-keys "fastcdr rti-connext-dds-6.0.1 urdfdom_headers ignition-math6 ignition-cmake2 catkin-pkg python3-catkin-pkg-modules python3-vcstool python3-rosdistro-modules"
     # RF - added ignore for the ignition-math6 and ignition-cmake2 and catkin-pkg
 
+# This will cache the build
+RUN --mount=type=cache,target=/root/build \
+    which colcon \
+    && colcon build
 
 
 
