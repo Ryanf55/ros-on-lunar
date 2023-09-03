@@ -83,15 +83,17 @@ RUN --mount=type=cache,target=/var/cache/apt \
       # Install colcon  through pip instaed\
       # colcon \ 
       python3-rosdep2
-RUN mkdir -p /root/ros2_humble/src
-WORKDIR /root/ros2_humble
-RUN vcs import --input https://raw.githubusercontent.com/ros2/ros2/humble/ros2.repos src
+
+ARG ROS_DISTRO=rolling
+RUN mkdir -p /root/ros2_${ROS_DISTRO}/src
+WORKDIR /root/ros2_${ROS_DISTRO}
+RUN vcs import --input https://raw.githubusercontent.com/ros2/ros2/${ROS_DISTRO}/ros2.repos src
 
 
 RUN --mount=type=cache,target=/root/.cache \
     --mount=type=cache,target=/root/.cache/pip \
     rosdep update && \
-    rosdep install --rosdistro humble --from-paths src --ignore-src -y --skip-keys "fastcdr rti-connext-dds-6.0.1 urdfdom_headers ignition-math6 ignition-cmake2 catkin-pkg python3-catkin-pkg-modules python3-vcstool python3-rosdistro-modules"
+    rosdep install --rosdistro ${ROS_DISTRO} --from-paths src --ignore-src -y --skip-keys "fastcdr rti-connext-dds-6.0.1 urdfdom_headers ignition-math6 ignition-cmake2 catkin-pkg python3-catkin-pkg-modules python3-vcstool python3-rosdistro-modules"
     # RF - added ignore for the ignition-math6 and ignition-cmake2 and catkin-pkg
 
 # https://colcon.readthedocs.io/en/released/user/installation.html
@@ -103,7 +105,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 # This will cache the build
 RUN --mount=type=cache,target=/root/build \
     which colcon \
-    && colcon build
+    && colcon build --packages-skip qt_gui_cpp --packages-skip-by-dep qt_gui_cpp
 
     # Fails with lark not found: https://github.com/ros2/rosidl/issues/491
 
