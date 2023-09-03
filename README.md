@@ -17,3 +17,4 @@ Why? Ubuntu 23 is a pre-requisite to ubuntu 24, which is what J-turtle targets. 
 * https://github.com/ros2/rosidl/issues/491
 * https://github.com/ros2/ros2/issues/1094
 * https://github.com/ros2/ros2/issues/1452
+* https://www.qt.io/blog/qt-5.15-support-ends#:~:text=Qt%205.15%20LTS%20was%20a,published%20yesterday%2C%20May%2025th%202023.
